@@ -12,27 +12,32 @@ $data = null;
 if ($conn) {
     // Handle confirm action
     if (isset($_POST['confirm'])) {
-        // Fetch the requested wedding date for this application
-        $stmt = $conn->prepare("SELECT wedding_date FROM wedding_applications WHERE id = ?");
+        // Fetch the related event's book_date
+        $stmt = $conn->prepare("SELECT e.book_date
+                                FROM event e
+                                WHERE e.wedding_application_id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
-        $application = $result->fetch_assoc();
-        $weddingDate = $application['wedding_date']; // Requested wedding date
+        $event = $result->fetch_assoc();
+        $weddingDate = $event['book_date'];
         $stmt->close();
 
-        // Check if the requested date is already booked
-        $stmt = $conn->prepare("SELECT id FROM wedding_applications WHERE wedding_date = ? AND status = 'approved'");
+        // Check if any other event has the same date and approved status
+        $stmt = $conn->prepare("SELECT event_id 
+                                FROM event 
+                                WHERE book_date = ? AND status = 'approved'");
         $stmt->bind_param("s", $weddingDate);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows > 0) {
-            // The date is already booked
             echo "<script>alert('This date has already been booked. Please select a different date.'); window.location.href = 'wedding.admin.php';</script>";
         } else {
-            // No conflict, proceed with confirming the application
-            $stmt = $conn->prepare("UPDATE wedding_applications SET status = 'approved' WHERE id = ?");
+            // No conflict — approve wedding application and related event
+            $stmt->close();
+
+            $stmt = $conn->prepare("UPDATE event SET status = 'approved' WHERE wedding_application_id = ?");
             $stmt->bind_param("i", $id);
             $stmt->execute();
             $stmt->close();
@@ -42,10 +47,18 @@ if ($conn) {
         exit;
     }
 
-    // Handle decline action (changed from delete)
+    // Handle decline action with remarks
     if (isset($_POST['decline'])) {
-        $stmt = $conn->prepare("UPDATE wedding_applications SET status = 'declined' WHERE id = ?");
+        $remarks = $_POST['remarks'];
+
+        $stmt = $conn->prepare("UPDATE event SET status = 'declined' WHERE wedding_application_id = ?");
         $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+
+
+        $stmt = $conn->prepare("UPDATE wedding_applications SET  decline_reason = ? WHERE wedding_applications_id = ?");
+        $stmt->bind_param("si", $remarks, $id);
         $stmt->execute();
         $stmt->close();
 
@@ -53,14 +66,18 @@ if ($conn) {
         exit;
     }
 
-    // Fetch data again
-    $stmt = $conn->prepare("SELECT * FROM wedding_applications WHERE id = ?");
+    // Fetch application data
+    $stmt = $conn->prepare("
+        SELECT w.*, e.booking_type
+        FROM wedding_applications w
+        LEFT JOIN event e ON w.wedding_applications_id = e.wedding_application_id
+        WHERE w.wedding_applications_id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
     $data = $result->fetch_assoc();
     $stmt->close();
-    $conn->close();
+
 }
 
 if (!$data) {
@@ -70,16 +87,13 @@ if (!$data) {
 
 function renderFileField($label, $path) {
     if (!$path) return;
-
     $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
     echo "<li><strong>$label:</strong><br>";
-
     if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
         echo "<img src=\"$path\" alt=\"$label\" style=\"max-width: 400px; height: auto; border: 1px solid #ccc; margin-bottom: 10px;\">";
     } else {
         echo "<a href=\"$path\" target=\"_blank\">View File</a>";
     }
-
     echo "</li>";
 }
 ?>
@@ -92,30 +106,11 @@ function renderFileField($label, $path) {
   <link rel="stylesheet" href="styles/test-admin.css">
   <link rel="stylesheet" href="test1.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    ul li {
-      margin-bottom: 20px;
-    }
-
-    ul li img {
-      display: block;
-      margin-top: 10px;
-      border-radius: 8px;
-    }
-
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    h2 { margin-bottom: 20px; }
+    ul { list-style: none; padding: 0; }
+    ul li { margin-bottom: 20px; }
+    ul li img { display: block; margin-top: 10px; border-radius: 8px; }
     a.button, button {
       display: inline-block;
       background-color: #ba5d5d;
@@ -127,45 +122,59 @@ function renderFileField($label, $path) {
       margin-right: 10px;
       cursor: pointer;
     }
-
-    .button-container {
-      margin-bottom: 20px;
-    }
+    .button-container { margin-bottom: 20px; }
   </style>
 </head>
 <body>
 
-    <a href="wedding.admin.php" class="button">← Back to List</a>
+<a href="wedding.admin.php" class="button">← Back to List</a>
 
-  <h2>Wedding Application Details</h2>
-  <ul>
-    <li><strong>Wife:</strong> <?= htmlspecialchars($data['wife_first_name'] . ' ' . $data['wife_middle_name'] . ' ' . $data['wife_last_name']) ?></li>
-    <li><strong>Husband:</strong> <?= htmlspecialchars($data['husband_first_name'] . ' ' . $data['husband_middle_name'] . ' ' . $data['husband_last_name']) ?></li>
-    <li><strong>Wife Age:</strong> <?= htmlspecialchars($data['wife_age']) ?></li>
-    <li><strong>Husband Age:</strong> <?= htmlspecialchars($data['husband_age']) ?></li>
-    <li><strong>Event Type:</strong> <?= htmlspecialchars($data['event_type']) ?></li>
-    <li><strong>Status:</strong> <?= htmlspecialchars(ucfirst($data['status'] ?? 'Pending')) ?></li>
-    <li><strong>Submitted At:</strong> <?= htmlspecialchars($data['submitted_at']) ?></li>
+<h2>Wedding Application Details</h2>
+<ul> <br>
+  <li><strong>Wife:</strong> <?= htmlspecialchars($data['wife_first_name'] . ' ' . $data['wife_middle_name'] . ' ' . $data['wife_last_name']) ?></li>
+  <li><strong>Husband:</strong> <?= htmlspecialchars($data['husband_first_name'] . ' ' . $data['husband_middle_name'] . ' ' . $data['husband_last_name']) ?></li>
+  <li><strong>Wife Age:</strong> <?= htmlspecialchars($data['wife_age']) ?></li>
+  <li><strong>Husband Age:</strong> <?= htmlspecialchars($data['husband_age']) ?></li>
+  <li><strong>Event Type:</strong> <?= htmlspecialchars($data['booking_type']) ?></li>
+  <li><strong>Status:</strong> <?= htmlspecialchars(ucfirst($data['status'] ?? 'Pending')) ?></li>
+  <li><strong>Submitted At:</strong> <?= htmlspecialchars($data['submitted_at']) ?></li>
 
-    <?php
-      renderFileField('Marriage License', $data['marriage_license']);
-      renderFileField('Application Form', $data['application_form']);
-      renderFileField('Birth Certificates', $data['birth_certificates']);
-      renderFileField('Certificate of No Marriage', $data['certificate_of_no_marriage']);
-      renderFileField('Community Tax Certificate', $data['community_tax_certificate']);
-      renderFileField('Parental Consent Advice', $data['parental_consent_advice']);
-      renderFileField('Valid IDs', $data['valid_ids']);
-      renderFileField('Barangay Certificate', $data['barangay_certificate']);
-      renderFileField('Canonical Interview', $data['canonical_interview']);
-    ?>
-  </ul>
+  <?php
+  renderFileField('Marriage License', $data['marriage_license']);
+  renderFileField('Application Form', $data['application_form']);
+  renderFileField('Birth Certificates', $data['birth_certificates']);
+  renderFileField('Certificate of No Marriage', $data['certificate_of_no_marriage']);
+  renderFileField('Community Tax Certificate', $data['community_tax_certificate']);
+  renderFileField('Parental Consent Advice Groom', $data['parental_consent_advice_groom']);
+  renderFileField('Parental Consent Advice Bride', $data['parental_consent_advice_bride']);
+  renderFileField('Valid IDs Groom', $data['valid_ids_groom']);
+  renderFileField('Valid IDs Bride', $data['valid_ids_bride']);
+  renderFileField('Barangay Certificate', $data['barangay_certificate']);
+  renderFileField('Canonical Interview', $data['canonical_interview']);
+  ?>
+</ul>
 
-  <div class="button-container">
-    <form method="post" style="display:inline;">
-      <button class="submit-button" type="submit" name="confirm">Confirm</button>
-      <button class="delete-button" type="submit" name="decline" onclick="return confirm('Are you sure you want to decline this application?');">Decline</button>
-    </form>
-  </div>
+<div class="button-container">
+  <form method="post" style="display:inline;" id="confirmForm">
+    <button class="submit-button" type="submit" name="confirm">Confirm</button>
+  </form>
+
+  <form method="post" style="display:inline;" id="declineForm">
+    <input type="hidden" name="remarks" id="remarksInput">
+    <input type="hidden" name="decline" value="1">
+    <button class="delete-button" type="button" onclick="declineApplication()">Decline</button>
+  </form>
+</div>
+
+<script>
+function declineApplication() {
+  var remarks = prompt("Please enter a reason for declining:");
+  if (remarks !== null) {
+    document.getElementById('remarksInput').value = remarks;
+    document.getElementById('declineForm').submit();
+  }
+}
+</script>
 
 </body>
 </html>

@@ -27,7 +27,7 @@ if ($conn) {
             wa.husband_first_name, 
             wa.husband_middle_name,
             wa.husband_last_name,
-            e.Book_Date, 
+            e.Book_Date,
             e.Start_time
         FROM wedding_applications wa
         JOIN event e ON wa.event_id = e.event_id

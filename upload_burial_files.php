@@ -99,7 +99,7 @@ if ($conn) {
             $event_id = $conn->insert_id;
 
             // Update burial_requirements with event_id
-            $updateRequirement = $conn->prepare("UPDATE burial_requirements SET event_id = ? WHERE burial_requirement_id = ?");
+            $updateRequirement = $conn->prepare("UPDATE burial_requirements SET event_id = ? WHERE burial_requirements_id = ?");
             $updateRequirement->bind_param("ii", $event_id, $burial_requirement_id);
 
             if ($updateRequirement->execute()) {

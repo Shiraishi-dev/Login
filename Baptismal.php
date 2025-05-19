@@ -93,6 +93,8 @@ if ($result && mysqli_num_rows($result) > 0) {
                 <h3>Father's Information</h3>
                 <div class="form-row">
                     <input type="text" name="father_first_name" placeholder="Father's First Name" required>
+                    <input type="text" name="father_middle_name" placeholder="Father's Middle Name" required>
+                    <input type="text" name="father_last_name" placeholder="Father's Last Name" required>
                 <h3>Mother's Information</h3>
                 <div class="form-row">
                     <input type="text" name="mother_first_name" placeholder="Mother's First Name" required>
