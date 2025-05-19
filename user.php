@@ -30,7 +30,7 @@ $username = $_SESSION['username'];
                 <ul class="nav-menu">
                     <li><a href="index.php" class="Home">Home</a></li>
                     <li><a href="index1.php" class="Book-Events">Book Events</a></li>
-                    <li><a href="" class="About-Us">About Us</a></li>
+                    <li><a href="about.php" class="About-Us">About Us</a></li>
                     <!-- Logout Button -->
                     <li>
                         <a href="pending.book.user.php" class="nav-log">My bookings</a>
