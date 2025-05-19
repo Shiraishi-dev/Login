@@ -10,44 +10,42 @@ $id = intval($_GET['id']);
 $data = null;
 
 if ($conn) {
-    // Handle confirm action
+    // Confirm application logic
     if (isset($_POST['confirm'])) {
-        // Fetch the related event's book_date
-        $stmt = $conn->prepare("SELECT e.book_date
-                                FROM event e
-                                WHERE e.wedding_application_id = ?");
+        // Fetch the related event's book_date and start_time
+        $stmt = $conn->prepare("SELECT e.book_date, e.start_time FROM event e WHERE e.wedding_application_id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $event = $result->fetch_assoc();
         $weddingDate = $event['book_date'];
+        $selectedStartTime = $event['start_time'];
         $stmt->close();
 
-        // Check if any other event has the same date and approved status
-        $stmt = $conn->prepare("SELECT event_id 
-                                FROM event 
-                                WHERE book_date = ? AND status = 'approved'");
-        $stmt->bind_param("s", $weddingDate);
+        // Check if the selected date and time is already approved for another application
+        $stmt = $conn->prepare("SELECT event_id FROM event WHERE book_date = ? AND start_time = ? AND status = 'approved' AND wedding_application_id != ?");
+        $stmt->bind_param("ssi", $weddingDate, $selectedStartTime, $id);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows > 0) {
-            echo "<script>alert('This date has already been booked. Please select a different date.'); window.location.href = 'wedding.admin.php';</script>";
-        } else {
-            // No conflict — approve wedding application and related event
+            echo "<script>alert('This date and time slot has already been approved for another application. Please Click Decline And Message The Client'); window.location.href = 'wedding.admin.php';</script>";
             $stmt->close();
-
-            $stmt = $conn->prepare("UPDATE event SET status = 'approved' WHERE wedding_application_id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $stmt->close();
-
-            echo "<script>alert('Application confirmed successfully!'); window.location.href = 'wedding.admin.php';</script>";
+            exit;
         }
+        $stmt->close();
+
+        // Approve application
+        $stmt = $conn->prepare("UPDATE event SET status = 'approved' WHERE wedding_application_id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+
+        echo "<script>alert('Application confirmed successfully!'); window.location.href = 'wedding.admin.php';</script>";
         exit;
     }
 
-    // Handle decline action with remarks
+    // Decline application logic
     if (isset($_POST['decline'])) {
         $remarks = $_POST['remarks'];
 
@@ -56,8 +54,7 @@ if ($conn) {
         $stmt->execute();
         $stmt->close();
 
-
-        $stmt = $conn->prepare("UPDATE wedding_applications SET  decline_reason = ? WHERE wedding_applications_id = ?");
+        $stmt = $conn->prepare("UPDATE wedding_applications SET decline_reason = ? WHERE wedding_applications_id = ?");
         $stmt->bind_param("si", $remarks, $id);
         $stmt->execute();
         $stmt->close();
@@ -68,7 +65,7 @@ if ($conn) {
 
     // Fetch application data
     $stmt = $conn->prepare("
-        SELECT w.*, e.booking_type
+        SELECT w.*, e.booking_type, e.book_date, e.start_time, e.status
         FROM wedding_applications w
         LEFT JOIN event e ON w.wedding_applications_id = e.wedding_application_id
         WHERE w.wedding_applications_id = ?");
@@ -77,7 +74,6 @@ if ($conn) {
     $result = $stmt->get_result();
     $data = $result->fetch_assoc();
     $stmt->close();
-
 }
 
 if (!$data) {
@@ -130,12 +126,14 @@ function renderFileField($label, $path) {
 <a href="wedding.admin.php" class="button">← Back to List</a>
 
 <h2>Wedding Application Details</h2>
-<ul> <br>
+<ul><br>
   <li><strong>Wife:</strong> <?= htmlspecialchars($data['wife_first_name'] . ' ' . $data['wife_middle_name'] . ' ' . $data['wife_last_name']) ?></li>
   <li><strong>Husband:</strong> <?= htmlspecialchars($data['husband_first_name'] . ' ' . $data['husband_middle_name'] . ' ' . $data['husband_last_name']) ?></li>
   <li><strong>Wife Age:</strong> <?= htmlspecialchars($data['wife_age']) ?></li>
   <li><strong>Husband Age:</strong> <?= htmlspecialchars($data['husband_age']) ?></li>
   <li><strong>Event Type:</strong> <?= htmlspecialchars($data['booking_type']) ?></li>
+  <li><strong>Event Date:</strong> <?= htmlspecialchars($data['book_date']) ?></li>
+  <li><strong>Event Time:</strong> <?= htmlspecialchars($data['start_time']) ?></li>
   <li><strong>Status:</strong> <?= htmlspecialchars(ucfirst($data['status'] ?? 'Pending')) ?></li>
   <li><strong>Submitted At:</strong> <?= htmlspecialchars($data['submitted_at']) ?></li>
 
@@ -169,9 +167,11 @@ function renderFileField($label, $path) {
 <script>
 function declineApplication() {
   var remarks = prompt("Please enter a reason for declining:");
-  if (remarks !== null) {
-    document.getElementById('remarksInput').value = remarks;
+  if (remarks !== null && remarks.trim() !== '') {
+    document.getElementById('remarksInput').value = remarks.trim();
     document.getElementById('declineForm').submit();
+  } else if (remarks !== null) {
+    alert('Decline reason cannot be empty.');
   }
 }
 </script>

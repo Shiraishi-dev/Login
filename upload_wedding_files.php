@@ -110,14 +110,14 @@ if ($insertWeddingApp->execute()) {
     $status = "Pending";
 
     $insertEvent = $conn->prepare("INSERT INTO event (
-        description, Book_Date, Start_time, wedding_application_id, booking_type, status
-    ) VALUES (?, ?, ?, ?, ?, ?)");
+        description, Book_Date, Start_time, wedding_application_id, booking_type, status, user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
     if (!$insertEvent) {
         die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
     }
 
-    $insertEvent->bind_param("sssiss", $description, $Book_Date, $Start_time, $wedding_application_id, $booking_type, $status);
+    $insertEvent->bind_param("sssissi", $description, $Book_Date, $Start_time, $wedding_application_id, $booking_type, $status ,$user_id);
 
     if ($insertEvent->execute()) {
         $event_id = $conn->insert_id;

@@ -2,6 +2,7 @@
 include('config.php');
 session_start();
 
+// Redirect to login if not logged in
 if (!isset($_SESSION['username'])) {
     echo "<script>window.open('login.php','_self')</script>";
     exit();
@@ -10,8 +11,16 @@ if (!isset($_SESSION['username'])) {
 $username = $_SESSION['username'];
 $weddingResults = $burialResults = $baptismalResults = [];
 
-// Fetch user_id using username
+// Check DB connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Fetch user_id
 $userQuery = $conn->prepare("SELECT user_id FROM user WHERE username = ?");
+if (!$userQuery) {
+    die("Prepare failed: " . $conn->error);
+}
 $userQuery->bind_param("s", $username);
 $userQuery->execute();
 $userResult = $userQuery->get_result();
@@ -24,58 +33,68 @@ if (!$userRow) {
 
 $user_id = $userRow['user_id'];
 
-// Wedding Applications with status
-$sql1 = "SELECT w.wedding_applications_id, w.husband_first_name, w.husband_last_name, w.wife_first_name, w.wife_last_name, e.status
-         FROM wedding_applications w
-         JOIN events e ON w.event_id = e.event_id
-         WHERE w.user_id = ?";
-$stmt1 = $conn->prepare($sql1);
-$stmt1->bind_param("i", $user_id);
-$stmt1->execute();
-$result1 = $stmt1->get_result();
-while ($row = $result1->fetch_assoc()) {
-    $weddingResults[] = $row;
+// Wedding Applications (pending only)
+$stmt1 = $conn->prepare("
+    SELECT wa.wedding_applications_id, wa.husband_first_name, wa.husband_last_name, wa.wife_first_name, wa.wife_last_name 
+    FROM wedding_applications wa
+    JOIN event e ON e.wedding_application_id = wa.wedding_applications_id
+    WHERE e.user_id = ? AND e.status = 'approved' AND e.booking_type = 'Wedding'
+");
+if ($stmt1) {
+    $stmt1->bind_param("i", $user_id);
+    $stmt1->execute();
+    $result1 = $stmt1->get_result();
+    while ($row = $result1->fetch_assoc()) {
+        $weddingResults[] = $row;
+    }
+    $stmt1->close();
 }
-$stmt1->close();
 
-// Burial Requirements with status
-$sql2 = "SELECT b.burial_requirements_id, b.deceased_name, e.status
-         FROM burial_requirements b
-         JOIN events e ON b.event_id = e.event_id
-         WHERE b.user_id = ?";
-$stmt2 = $conn->prepare($sql2);
-$stmt2->bind_param("i", $user_id);
-$stmt2->execute();
-$result2 = $stmt2->get_result();
-while ($row = $result2->fetch_assoc()) {
-    $burialResults[] = $row;
+// Burial Requests (pending only)
+$stmt2 = $conn->prepare("
+    SELECT br.burial_requirements_id, br.deceased_name , br.date_of_death, br.funeral_home, br.place_of_death, e.Book_Date, e.Start_time
+    FROM burial_requirements br
+    JOIN event e ON e.burial_requirement_id = br.burial_requirements_id
+    WHERE e.user_id = ? AND e.status = 'approved' AND e.booking_type = 'Burial'
+");
+if ($stmt2) {
+    $stmt2->bind_param("i", $user_id);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+    while ($row = $result2->fetch_assoc()) {
+        $burialResults[] = $row;
+    }
+    $stmt2->close();
 }
-$stmt2->close();
 
-// Baptismal Bookings with status
-$sql3 = "SELECT b.baptismal_bookings_id, b.child_first_name, b.child_last_name, b.father_first_name, b.father_last_name, b.mother_first_name, b.mother_last_name, e.status
-         FROM baptismal_bookings b
-         JOIN events e ON b.event_id = e.event_id
-         WHERE b.user_id = ?";
-$stmt3 = $conn->prepare($sql3);
-$stmt3->bind_param("i", $user_id);
-$stmt3->execute();
-$result3 = $stmt3->get_result();
-while ($row = $result3->fetch_assoc()) {
-    $baptismalResults[] = $row;
+// Baptismal Bookings (pending only)
+$stmt3 = $conn->prepare("
+    SELECT bb.baptismal_bookings_id, bb.child_first_name, bb.child_last_name, bb.father_first_name, bb.father_last_name, bb.mother_first_name, bb.mother_last_name 
+    FROM baptismal_bookings bb
+    JOIN event e ON e.baptismal_booking_id = bb.baptismal_bookings_id
+    WHERE e.user_id = ? AND e.status = 'approved' AND e.booking_type = 'Baptismal'
+");
+if ($stmt3) {
+    $stmt3->bind_param("i", $user_id);
+    $stmt3->execute();
+    $result3 = $stmt3->get_result();
+    while ($row = $result3->fetch_assoc()) {
+        $baptismalResults[] = $row;
+    }
+    $stmt3->close();
 }
-$stmt3->close();
+
 $conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Pending Requests</title>
-  <link rel="stylesheet" href="styles/test-admin.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=pending_actions" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Approved Requests</title>
+  <link rel="stylesheet" href="styles/test-admin.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap" />
   <style>
     .edit-btn {
       display: inline-block;
@@ -90,11 +109,22 @@ $conn->close();
     .edit-btn:hover {
       background-color: #45a049;
     }
-    .status-label {
-      color: #888;
-      font-weight: normal;
-      font-style: italic;
-      margin-left: 5px;
+    .request-card {
+      background: #f5f5f5;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+    }
+    .view-more-btn {
+      background-color: #007BFF;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+      margin-left: 10px;
+    }
+    .view-more-btn:hover {
+      background-color: #0056b3;
     }
   </style>
 </head>
@@ -102,25 +132,25 @@ $conn->close();
 
 <aside class="sidebar">
   <div class="side-header">
-    <a href="user.php"><img src="includes/logo.jpg" alt="logo"></a>
+    <a href="user.php"><img src="includes/logo.jpg" alt="logo" /></a>
     <h2 class="title-a">Corpus Christi Parish</h2>
   </div>
 
-  <ul class="sidebar-links"><span class="material-symbols-outlined">
+  <ul class="sidebar-links">
     <h4><span>Book Request</span></h4>
     <li><a href="pending.book.user.php">Pending Bookings</a></li>
     <li><a href="approved.book.user.php">Approved Bookings</a></li>
-    <li><a href="decline.book.user.php">Declined Bookings</a></li>
+    <li><a href="declined.book.user.php">Declined Bookings</a></li>
     <h4><span>Menu</span></h4>
     <li><a href="index.php">Logout</a></li>
   </ul>
 
   <div class="user-account">
     <div class="user-profile">
-      <img src="includes/profile.jpg" alt="profile-img">
+      <img src="includes/profile.jpg" alt="profile-img" />
       <div class="user-detail">
-        <h3><?php echo htmlspecialchars($username); ?></h3>
-        <span>Admin</span>
+        <h3><?= htmlspecialchars($username) ?></h3>
+        <span>User</span>
       </div>
     </div>
   </div>
@@ -129,18 +159,16 @@ $conn->close();
 <div class="top1"></div>
 
 <div class="client-requests">
-  <h2>Your Pending Requests</h2>
+  <h2>Your Approved Requests</h2>
 
   <!-- Wedding Applications -->
   <h3>Wedding Applications</h3>
   <?php if (!empty($weddingResults)): ?>
     <?php foreach ($weddingResults as $row): ?>
       <div class="request-card">
-        <h4><?= htmlspecialchars($row['husband_first_name'] . ' ' . $row['husband_last_name']) ?> & <?= htmlspecialchars($row['wife_first_name'] . ' ' . $row['wife_last_name']) ?>
-          <span class="status-label">(<?= htmlspecialchars($row['status']) ?>)</span>
-        </h4>
-        <a href="wedding.details.user.php?id=<?= $row['wedding_applications_id'] ?>" class="view-more-btn">View More</a>
-        <a href="wedding.edit.php?id=<?= $row['wedding_applications_id'] ?>" class="edit-btn">Edit</a>
+        <h4><?= htmlspecialchars($row['husband_first_name'] . ' ' . $row['husband_last_name']) ?> & <?= htmlspecialchars($row['wife_first_name'] . ' ' . $row['wife_last_name']) ?></h4>
+        <a href="wedding.details.user.php?id=<?= urlencode($row['wedding_applications_id']) ?>" class="view-more-btn">View More</a>
+        <a href="wedding.edit.php?id=<?= urlencode($row['wedding_applications_id']) ?>" class="edit-btn">Edit</a>
       </div>
     <?php endforeach; ?>
   <?php else: ?>
@@ -152,11 +180,14 @@ $conn->close();
   <?php if (!empty($burialResults)): ?>
     <?php foreach ($burialResults as $row): ?>
       <div class="request-card">
-        <h4><?= htmlspecialchars($row['deceased_name']) ?>
-          <span class="status-label">(<?= htmlspecialchars($row['status']) ?>)</span>
-        </h4>
-        <a href="user.pending.details.burial.php?id=<?= $row['burial_requirements_id'] ?>" class="view-more-btn">View More</a>
-        <a href="burial.edit.php?id=<?= $row['burial_requirements_id'] ?>" class="edit-btn">Edit</a>
+        <h4>Deceased Name: <?= htmlspecialchars($row['deceased_name']) ?></h4>
+        <p>Date of Date: <?= htmlspecialchars($row['date_of_death']) ?></p>
+        <p>Funeral Home: <?= htmlspecialchars($row['funeral_home']) ?></p>
+        <p>Place of Death <?= htmlspecialchars($row['place_of_death']) ?></p>
+        <p>Book Date: <?= htmlspecialchars($row['Book_Date']) ?></p>
+        <p>Start time: <?= htmlspecialchars($row['Start_time']) ?></p>
+        <a href="user.pending.details.burial.php?id=<?= urlencode($row['burial_requirements_id']) ?>" class="view-more-btn">View More</a>
+        <a href="burial.edit.php?id=<?= urlencode($row['burial_requirements_id']) ?>" class="edit-btn">Edit</a>
       </div>
     <?php endforeach; ?>
   <?php else: ?>
@@ -168,11 +199,9 @@ $conn->close();
   <?php if (!empty($baptismalResults)): ?>
     <?php foreach ($baptismalResults as $row): ?>
       <div class="request-card">
-        <h4><?= htmlspecialchars($row['child_first_name'] . ' ' . $row['child_last_name']) ?>
-          <span class="status-label">(<?= htmlspecialchars($row['status']) ?>)</span>
-        </h4>
-        <a href="baptismal.details.php?id=<?= $row['baptismal_bookings_id'] ?>" class="view-more-btn">View More</a>
-        <a href="baptismal.edit.php?id=<?= $row['baptismal_bookings_id'] ?>" class="edit-btn">Edit</a>
+        <h4><?= htmlspecialchars($row['child_first_name'] . ' ' . $row['child_last_name']) ?></h4>
+        <a href="baptismal.details.php?id=<?= urlencode($row['baptismal_bookings_id']) ?>" class="view-more-btn">View More</a>
+        <a href="baptismal.edit.php?id=<?= urlencode($row['baptismal_bookings_id']) ?>" class="edit-btn">Edit</a>
       </div>
     <?php endforeach; ?>
   <?php else: ?>

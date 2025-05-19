@@ -9,20 +9,46 @@ if (!isset($_SESSION['username'])) {
 
 $username = $_SESSION['username'];
 $submissionMessage = '';
+$errors = [];
 
-// Fetch approved wedding dates from the database
-$approvedDates = [];
-$query = "SELECT Book_Date FROM event WHERE booking_type='Wedding' AND status = 'approved'";
-$result = mysqli_query($conn, $query);
-
-if ($result) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $approvedDates[] = $row['Book_Date'];
+// Fetch approved burial/wedding dates and times, grouped by date
+$bookedSlots = [];
+$sql = "SELECT Book_Date, Start_time FROM event WHERE status = 'approved'";
+$result = $conn->query($sql);
+while ($row = $result->fetch_assoc()) {
+    $date = $row['Book_Date'];
+    $time = $row['Start_time'];
+    if (!isset($bookedSlots[$date])) {
+        $bookedSlots[$date] = [];
     }
+    $bookedSlots[$date][] = $time;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    include('upload_wedding_files.php'); // Make sure this sets $submissionMessage
+    $chosen_date = $_POST['Book_Date'];
+    $chosen_time = $_POST['Start_time'];
+    $dayOfWeek = date('w', strtotime($chosen_date));
+
+    if ($dayOfWeek == 0 || $dayOfWeek == 6) {
+        $errors[] = "Weekends are not allowed.";
+    }
+
+    // Check if date and time are already approved
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM event WHERE Book_Date = ? AND Start_time = ? AND status = 'approved'");
+    $stmt->bind_param("ss", $chosen_date, $chosen_time);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($count > 0) {
+        $errors[] = "This date and time is already booked.";
+    }
+
+    if (empty($errors)) {
+        include('upload_wedding_files.php');
+        $submissionMessage = "Wedding request submitted successfully.";
+    }
 }
 ?>
 
@@ -33,6 +59,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Wedding Form</title>
     <link rel="stylesheet" href="styles/Wedding.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        select option:disabled {
+            color: red;
+        }
+        .unavailable {
+            color: red;
+            font-weight: bold;
+        }
+        .unavailable::after {
+            content: " (Unavailable)";
+        }
+    </style>
 </head>
 <body>
     <a href="index1.php" class="go-back">GO BACK</a>
@@ -56,22 +94,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label>Canonical Interview<br /><input type="file" name="canonical_interview" accept=".pdf,.jpg,.png" required /></label>
                 </div>
             </div>
-            
+
             <div class="form-section">
                 <h2>Fill up this form</h2>
                 <h3>Wife Information</h3>
                 <div class="form-row">
-                   <input type="text" name="wife_first_name" placeholder="Wife's First Name" required>
-                   <input type="text" name="wife_middle_name" placeholder="Wife's Middle Name" required>
-                   <input type="text" name="wife_last_name" placeholder="Wife's Last Name" required>
-                   <input type="number" name="wife_age" placeholder="Wife Age" required>
+                    <input type="text" name="wife_first_name" placeholder="Wife's First Name" required>
+                    <input type="text" name="wife_middle_name" placeholder="Wife's Middle Name" required>
+                    <input type="text" name="wife_last_name" placeholder="Wife's Last Name" required>
+                    <input type="number" name="wife_age" placeholder="Wife Age" required>
                 </div>
                 <h3>Husband Information</h3>
                 <div class="form-row">
-                   <input type="text" name="husband_first_name" placeholder="Husband's First Name" required>
-                   <input type="text" name="husband_middle_name" placeholder="Husband's Middle Name" required>
-                   <input type="text" name="husband_last_name" placeholder="Husband's Last Name" required>
-                   <input type="number" name="husband_age" placeholder="Husband Age" required>
+                    <input type="text" name="husband_first_name" placeholder="Husband's First Name" required>
+                    <input type="text" name="husband_middle_name" placeholder="Husband's Middle Name" required>
+                    <input type="text" name="husband_last_name" placeholder="Husband's Last Name" required>
+                    <input type="number" name="husband_age" placeholder="Husband Age" required>
                 </div>
                 <h3>Wedding Date</h3>
                 <div class="form-row">
@@ -81,12 +119,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-row">
                     <select name="Start_time" id="time_of_wedding" required>
                         <option value="">Select Time</option>
-                            <option value="09:00">9:00 AM</option>
-                            <option value="13:00">1:00 PM</option>
-                        </select>
-                    </div>
-
-
+                        <option value="09:00:00">9:00 AM</option>
+                        <option value="13:00:00">1:00 PM</option>
+                    </select>
+                </div>
             </div>
             <button type="submit" class="submit-btn">SUBMIT</button>
         </form>
@@ -94,25 +130,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        const approvedDates = <?php echo json_encode($approvedDates); ?>;
 
-        flatpickr("#date_of_wedding", {
-            dateFormat: "Y-m-d",
-            disable: [
-                function(date) {
-                    return (date.getDay() === 0 || date.getDay() === 6); // Disable Sundays & Saturdays
-                },
-                ...approvedDates
-            ],
-            minDate: "today"
+    <script>
+    const bookedSlots = <?php echo json_encode($bookedSlots); ?>;
+
+flatpickr("#date_of_wedding", {
+   dateFormat: "Y-m-d",
+    disable: [
+        function(date) {
+            const d = flatpickr.formatDate(date, "Y-m-d");
+            // Disable weekends
+            if (date.getDay() === 0 || date.getDay() === 6) return true;
+
+            // Disable dates where both time slots are fully booked
+            if (bookedSlots[d]) {
+                const times = bookedSlots[d];
+                if (times.includes("09:00:00") && times.includes("13:00:00")) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    ],
+    minDate: "today",
+    onChange: function(selectedDates, dateStr) {
+        const timeSelect = document.getElementById("time_of_wedding");
+
+        // Enable all time options initially
+        Array.from(timeSelect.options).forEach(opt => {
+            opt.disabled = false;
+            opt.style.color = '';
         });
+
+        if (bookedSlots[dateStr]) {
+            bookedSlots[dateStr].forEach(time => {
+                const option = timeSelect.querySelector(`option[value="${time}"]`);
+                if (option) {
+                    option.disabled = true;
+                    option.style.color = "red";
+                }
+            });
+        }
+    }
+});
+
+
     </script>
 
     <?php if (!empty($submissionMessage)): ?>
-        <script>
-            alert("<?php echo addslashes($submissionMessage); ?>");
-        </script>
+        <script>alert("<?= addslashes($submissionMessage); ?>");</script>
     <?php endif; ?>
 </body>
 </html>

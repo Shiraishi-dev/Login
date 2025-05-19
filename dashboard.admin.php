@@ -175,6 +175,7 @@ $conn->close();
         <p>Baptismal: <?= $counts['approved']['baptismal'] ?></p>
         <p>Burial: <?= $counts['approved']['burial'] ?></p>
     </div>
+    
 
     <div class="card">
         <h3>Ongoing Events</h3>

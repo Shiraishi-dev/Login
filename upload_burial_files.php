@@ -90,10 +90,10 @@ if ($conn) {
 
         // Insert into event table
         $insertEvent = $conn->prepare("INSERT INTO event (
-            description, Book_Date, Start_time, burial_requirement_id, booking_type, status
-        ) VALUES (?, ?, ?, ?, ?, ?)");
+            description, Book_Date, Start_time, burial_requirement_id, booking_type, status, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-        $insertEvent->bind_param("sssiss", $description, $Book_Date, $Start_time, $burial_requirement_id, $booking_type, $status);
+        $insertEvent->bind_param("sssissi", $description, $Book_Date, $Start_time, $burial_requirement_id, $booking_type, $status, $user_id);
 
         if ($insertEvent->execute()) {
             $event_id = $conn->insert_id;

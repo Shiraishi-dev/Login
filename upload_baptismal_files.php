@@ -54,6 +54,8 @@ $date_of_baptism       = $_POST['date_of_baptism'];
 $Start_time            = $_POST['Start_time'];
 
 $father_first_name     = $_POST['father_first_name'];
+$father_middle_name     = $_POST['father_middle_name'];
+$father_last_name     = $_POST['father_last_name'];
 $mother_first_name     = $_POST['mother_first_name'];
 $mother_middle_name    = $_POST['mother_middle_name'];
 $mother_last_name      = $_POST['mother_last_name'];
@@ -70,10 +72,10 @@ $canonical_interview             = uploadFile('canonical_interview');
 // Insert into baptismal_bookings table
 $sql = "INSERT INTO baptismal_bookings (
     user_id, child_first_name, child_middle_name, child_last_name, child_birth_date,
-    father_first_name, mother_first_name, mother_middle_name, mother_last_name,
+    father_first_name, father_middle_name, father_last_name, mother_first_name, mother_middle_name, mother_last_name,
     birth_certificate, marriage_certificate_of_parents, baptismal_seminar_certificate, sponsor_list,
     valid_ids, barangay_certificate, canonical_interview
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
@@ -81,9 +83,9 @@ if ($stmt === false) {
 }
 
 $stmt->bind_param(
-    "isssssssssssssss",
+    "isssssssssssssssss",
     $user_id, $child_first_name, $child_middle_name, $child_last_name, $child_birth_date,
-    $father_first_name, $mother_first_name, $mother_middle_name, $mother_last_name,
+    $father_first_name, $father_middle_name, $father_last_name ,$mother_first_name, $mother_middle_name, $mother_last_name,
     $birth_certificate, $marriage_certificate_of_parents, $baptismal_seminar_certificate, $sponsor_list,
     $valid_ids, $barangay_certificate, $canonical_interview
 );
@@ -97,10 +99,10 @@ if ($stmt->execute()) {
     $status = "Pending";
 
     $eventStmt = $conn->prepare("INSERT INTO event (
-        description, Book_Date, Start_time, baptismal_booking_id, booking_type, status
-    ) VALUES (?, ?, ?, ?, ?, ?)");
+        description, Book_Date, Start_time, baptismal_booking_id, booking_type, status, user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-    $eventStmt->bind_param("sssiss", $description, $date_of_baptism, $Start_time, $baptismal_booking_id, $booking_type, $status);
+    $eventStmt->bind_param("sssissi", $description, $date_of_baptism, $Start_time, $baptismal_booking_id, $booking_type, $status, $user_id);
 
     if ($eventStmt->execute()) {
         $event_id = $conn->insert_id;

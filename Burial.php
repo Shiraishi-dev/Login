@@ -11,30 +11,38 @@ $username = $_SESSION['username'];
 $submissionMessage = '';
 $errors = [];
 
-// Fetch approved burial dates
-$approvedDates = [];
-$result = $conn->query("SELECT Book_Date FROM event WHERE status = 'approved'");
+// Fetch approved burial dates and times, grouped by date
+$approvedTimes = [];
+$sql = "SELECT Book_Date, Start_time FROM event WHERE status = 'approved'";
+$result = $conn->query($sql);
 while ($row = $result->fetch_assoc()) {
-    $approvedDates[] = $row['Book_Date'];
+    $date = $row['Book_Date'];
+    $time = $row['Start_time'];
+    if (!isset($approvedTimes[$date])) {
+        $approvedTimes[$date] = [];
+    }
+    $approvedTimes[$date][] = $time;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $chosen_date = $_POST['Book_Date'];
+    $chosen_time = $_POST['Start_time'];  // Added to validate selected time
     $dayOfWeek = date('w', strtotime($chosen_date));
 
     if ($dayOfWeek == 0 || $dayOfWeek == 6) {
         $errors[] = "Weekends are not allowed.";
     }
 
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM event WHERE Book_Date = ? AND status = 'approved'");
-    $stmt->bind_param("s", $chosen_date);
+    // Check if date and time are already booked
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM event WHERE Book_Date = ? AND Start_time = ? AND status = 'approved'");
+    $stmt->bind_param("ss", $chosen_date, $chosen_time);
     $stmt->execute();
     $stmt->bind_result($count);
     $stmt->fetch();
     $stmt->close();
 
     if ($count > 0) {
-        $errors[] = "This date is already booked.";
+        $errors[] = "This date and time is already booked.";
     }
 
     if (empty($errors)) {
@@ -102,41 +110,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
-    
 <script>
-    const approvedDates = <?= json_encode($approvedDates); ?>;
+    // Pass approved times to JS
+    const approvedTimes = <?= json_encode($approvedTimes); ?>;
 
     flatpickr("#burial_date", {
-        minDate: "today",
         dateFormat: "Y-m-d",
         disable: [
             function(date) {
-                const day = date.getDay();
-                const formattedDate = flatpickr.formatDate(date, "Y-m-d");
-                return (
-                    day === 0 || // Sunday
-                    day === 6 || // Saturday
-                    approvedDates.includes(formattedDate)
-                );
+                const d = flatpickr.formatDate(date, "Y-m-d");
+                // Disable weekends
+                if (date.getDay() === 0 || date.getDay() === 6) return true;
+
+                // Disable dates where both time slots are fully booked
+                if (approvedTimes[d]) {
+                    // If both times 09:00 and 13:00 booked, disable the date
+                    const times = approvedTimes[d];
+                    if (times.includes("09:00:00") && times.includes("13:00:00")) {
+                        return true;
+                    }
+                }
+                return false;
             }
         ],
-        onDayCreate: function(dObj, dStr, fp, dayElem) {
-            const dateStr = flatpickr.formatDate(dayElem.dateObj, "Y-m-d");
-            const day = dayElem.dateObj.getDay();
+        minDate: "today",
+        onChange: function(selectedDates, dateStr) {
+            const timeSelect = document.getElementById("time_of_burial");
 
-            if (day === 0 || day === 6) {
-                dayElem.classList.add("weekend");
-            }
+            // Enable all time options initially
+            Array.from(timeSelect.options).forEach(opt => {
+                opt.disabled = false;
+                opt.style.color = '';
+            });
 
-            if (approvedDates.includes(dateStr)) {
-                dayElem.classList.add("approved-date");
+            if (approvedTimes[dateStr]) {
+                approvedTimes[dateStr].forEach(time => {
+                    // Normalize to HH:mm format for matching option value
+                    let normalized = time;
+                    if (time === "09:00:00") normalized = "09:00";
+                    else if (time === "13:00:00") normalized = "13:00";
+
+                    const option = timeSelect.querySelector(`option[value="${normalized}"]`);
+                    if (option) {
+                        option.disabled = true;
+                        option.style.color = "red";
+                    }
+                });
             }
         }
     });
 
     flatpickr("#death_date", {
-        maxDate: "today",
-        dateFormat: "Y-m-d"
+        dateFormat: "Y-m-d",
+        maxDate: "today"
     });
 </script>
 
