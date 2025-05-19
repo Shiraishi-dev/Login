@@ -91,7 +91,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-section">
                 <h2>Deceased Information</h2>
                 <div class="form-row">
-                    <span>Deceased Name: </span><br><input type="text" name="deceased_name" placeholder="Full Name of Deceased" required>
+                    <span>Deceased First Name: </span><br><input type="text" name="deceased_first_name" placeholder="First Name of Deceased" required>
+                    <span>Deceased Middle Name: </span><br><input type="text" name="deceased_middle_name" placeholder="Middle Name of Deceased" required>
+                    <span>Deceased Last Name: </span><br><input type="text" name="deceased_last_name" placeholder="Last Name of Deceased" required>
                     <span>Date of Death: </span><br><input type="text" id="death_date" name="date_of_death" required>
                     <span>Place of Death: </span><br><input type="text" name="place_of_death" placeholder="Place of Death" required>
                     <span>Funeral Home: </span><br><input type="text" name="funeral_home" placeholder="Funeral Home Name" required>

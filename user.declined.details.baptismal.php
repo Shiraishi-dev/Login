@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Update event table
     $stmt = $conn->prepare("UPDATE event SET Book_Date=?, Start_time=?, Status='Pending' WHERE baptismal_booking_id=?");
-    $stmt->bind_param("ssi", $Book_Date, $Start_time, $id);
+    $stmt->bind_param("ssi", $date_of_baptism, $Start_time, $id);
     $stmt->execute();
     $stmt->close();
 
@@ -113,14 +113,12 @@ while ($row = $slotResult->fetch_assoc()) {
     $bookedSlots[$date][] = $time;
 }
 
-// Dates where both 9AM and 1PM are booked
 $disabledDates = [];
 foreach ($bookedSlots as $date => $times) {
     if (in_array("09:00:00", $times) && in_array("13:00:00", $times)) {
         $disabledDates[] = $date;
     }
 }
-
 
 function renderFileField($label, $path) {
     if (!$path) return;
@@ -145,7 +143,6 @@ function renderFileField($label, $path) {
   <title>Baptismal Application Details & Update</title>
   <link rel="stylesheet" href="styles/test-admin.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -318,26 +315,25 @@ function renderFileField($label, $path) {
 
 
       <label for="date_of_baptism">Date of Baptism:</label>
-      <input type="text" id="date_of_baptism" name="Book_Date" value="<?= htmlspecialchars($data['Book_Date']) ?>" required>
+      <input type="text" id="date_of_wedding" name="Book_Date" value="<?= htmlspecialchars($data['Book_Date']) ?>" required>
 
-      <label for="time_of_baptism">Start Time:</label>
-      <select id="time_of_baptism" name="Start_time" required>
+      <label for="time_of_wedding">Start Time:</label>
+      <select id="time_of_wedding" name="Start_time" required>
         <option value="">-- Select Start Time --</option>
         <option value="09:00:00" <?= $data['Start_time'] == "09:00:00" ? 'selected' : '' ?>>09:00 AM</option>
         <option value="13:00:00" <?= $data['Start_time'] == "13:00:00" ? 'selected' : '' ?>>01:00 PM</option>
       </select>
 
 
-
-      <label for="Birth Certificate">Death Certificate:</label>
+      <label for="birth_certificate">Birth Certificate:</label>
       <input type="file" id="birth_certificate" name="birth_certificate">
       <?php if (!empty($data['birth_certificate'])): ?>
         <small>Current: <a href="<?= htmlspecialchars($data['birth_certificate']) ?>" target="_blank">View</a></small>
       <?php endif; ?>
 
-      <label for="Marriage Certificate of Parents">Barangay Clearance:</label>
+      <label for="marriage_certificate_of_parents">Marriage Certificate of Parents:</label>
       <input type="file" id="marriage_certificate_of_parents" name="marriage_certificate_of_parents">
-      <?php if (!empty($data['barangay_clearance'])): ?>
+      <?php if (!empty($data['marriage_certificate_of_parents'])): ?>
         <small>Current: <a href="<?= htmlspecialchars($data['marriage_certificate_of_parents']) ?>" target="_blank">View</a></small>
       <?php endif; ?>
 
@@ -353,7 +349,7 @@ function renderFileField($label, $path) {
       <?php if (!empty($data['sponsor_list'])): ?>
         <small>Current: <a href="<?= htmlspecialchars($data['sponsor_list']) ?>" target="_blank">View</a></small>
       <?php endif; ?>
-
+      
 
       <label for="Valid IDs">Valid ID:</label>
       <input type="file" id="valid_ids" name="valid_ids">
@@ -362,55 +358,54 @@ function renderFileField($label, $path) {
       <?php endif; ?>
 
 
-      <label for="Barangay Certificate">Barangay Certificate:</label>
+      <label for="barangay_certificate">Barangay Certificate:</label>
       <input type="file" id="barangay_certificate" name="barangay_certificate">
       <?php if (!empty($data['barangay_certificate'])): ?>
         <small>Current: <a href="<?= htmlspecialchars($data['barangay_certificate']) ?>" target="_blank">View</a></small>
       <?php endif; ?>
 
 
-      <label for="Canonical Interview">Canonical Interview:</label>
+      <label for="canonical_interview">Canonical Interview:</label>
       <input type="file" id="canonical_interview" name="canonical_interview">
       <?php if (!empty($data['canonical_interview'])): ?>
         <small>Current: <a href="<?= htmlspecialchars($data['canonical_interview']) ?>" target="_blank">View</a></small>
       <?php endif; ?>
+
 
       <button type="submit">Update</button>
     </form>
   </div>
 
  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const approvedSlots = <?= json_encode($bookedSlots) ?>;
-  const disabledDates = <?= json_encode($disabledDates) ?>;
+  <script>
+    const bookedSlots = <?= json_encode($bookedSlots); ?>;
 
-  const bookDateInput = document.getElementById("date_of_baptism");
-  const timeSelect = document.getElementById("time_of_baptism");
-
-  function updateAvailableTimes(selectedDate) {
-    const selectedDateStr = selectedDate.toISOString().split('T')[0];
-    const takenTimes = approvedSlots[selectedDateStr] || [];
-
-    // Enable all time options
-    const options = timeSelect.querySelectorAll("option");
-    options.forEach(option => {
-      option.disabled = takenTimes.includes(option.value);
-    });
-  }
-
-  flatpickr(bookDateInput, {
-    dateFormat: "Y-m-d",
-    minDate: "today",
-    disable: disabledDates,
-    onChange: function (selectedDates) {
-      if (selectedDates.length > 0) {
-        updateAvailableTimes(selectedDates[0]);
+    flatpickr("#date_of_wedding", {
+      dateFormat: "Y-m-d",
+      minDate: "today",
+      disable: [
+        function(date) {
+          // Disable weekends (Saturday=6, Sunday=0)
+          if (date.getDay() === 0 || date.getDay() === 6) {
+            return true;
+          }
+          const formatted = flatpickr.formatDate(date, "Y-m-d");
+          // If both 09:00:00 and 13:00:00 are booked, disable the day
+          if (bookedSlots[formatted]) {
+            const times = bookedSlots[formatted];
+            if (times.includes("09:00:00") && times.includes("13:00:00")) {
+              return true;
+            }
+          }
+          return false;
+        }
+      ],
+      onChange: function(selectedDates, dateStr, instance) {
+        // Clear start time if burial date changes
+        document.getElementById('Start_time').value = '';
       }
-    }
-  });
-});
-</script>
+    });
+  </script>
 
 
 

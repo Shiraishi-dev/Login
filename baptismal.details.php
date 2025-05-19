@@ -183,5 +183,17 @@ function renderFileField($label, $path) {
     </form>
   </div>
 
+
+  <script>
+    function declineApplication() {
+      var remarks = prompt("Please enter a reason for declining:");
+      if (remarks !== null && remarks.trim() !== '') {
+        document.getElementById('remarksInput').value = remarks.trim();
+        document.getElementById('declineForm').submit();
+      } else if (remarks !== null) {
+        alert('Decline reason cannot be empty.');
+      }
+    }
+  </script>
 </body>
 </html>

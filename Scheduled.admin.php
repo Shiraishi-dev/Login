@@ -127,8 +127,8 @@ $conn->close();
         <li><a href="burial.admin.php"><span class="material-symbols-outlined">concierge</span>Burial</a></li>
         <h4><span>Menu</span></h4>
         <li><a href="Scheduled.admin.php"><span class="material-symbols-outlined">event</span>Events Schedule</a></li>
-        <li><a href="scheduled.ongoing.baptismal.php"><span class="material-symbols-outlined">chronic</span>Ongoing</a></li>
-        <li><a href="Scheduled.admin.php"><span class="material-symbols-outlined">folder_match</span>Archive Records</a></li>
+        <li><a href="scheduled.ongoing.admin.php"><span class="material-symbols-outlined">chronic</span>Ongoing</a></li>
+        <li><a href="archive.admin.php"><span class="material-symbols-outlined">folder_match</span>Archive Records</a></li>
         <li><a href="index.php"><span class="material-symbols-outlined">logout</span>Logout</a></li>
       </ul>
 
@@ -159,7 +159,7 @@ $conn->close();
       </div>
     <?php endforeach; ?>
   <?php else: ?>
-    <p>No pending wedding applications found.</p>
+    <p>No scheduled wedding applications found.</p>
   <?php endif; ?>
 
   <!-- Burial Requests -->
@@ -177,7 +177,7 @@ $conn->close();
       </div>
     <?php endforeach; ?>
   <?php else: ?>
-    <p>No pending burial requests found.</p>
+    <p>No scheduled burial requests found.</p>
   <?php endif; ?>
 
   <!-- Baptismal Requests -->
@@ -194,7 +194,7 @@ $conn->close();
       </div>
     <?php endforeach; ?>
   <?php else: ?>
-    <p>No pending baptismal requests found.</p>
+    <p>No scheduled baptismal requests found.</p>
   <?php endif; ?>
 </div>
 

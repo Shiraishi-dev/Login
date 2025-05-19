@@ -64,8 +64,8 @@
         <li><a href="burial.admin.php"><span class="material-symbols-outlined">concierge</span>Burial</a></li>
         <h4><span>Menu</span></h4>
         <li><a href="Scheduled.admin.php"><span class="material-symbols-outlined">event</span>Events Schedule</a></li>
-        <li><a href="scheduled.ongoing.baptismal.php"><span class="material-symbols-outlined">chronic</span>Ongoing</a></li>
-        <li><a href="Scheduled.admin.php"><span class="material-symbols-outlined">folder_match</span>Archive Records</a></li>
+        <li><a href="scheduled.ongoing.admin.php"><span class="material-symbols-outlined">chronic</span>Ongoing</a></li>
+        <li><a href="archive.admin.php"><span class="material-symbols-outlined">folder_match</span>Archive Records</a></li>
         <li><a href="index.php"><span class="material-symbols-outlined">logout</span>Logout</a></li>
       </ul>
 

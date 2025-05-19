@@ -47,7 +47,9 @@ function uploadFile($field) {
 }
 
 // Collect form data
-$deceased_name   = $_POST['deceased_name'];
+$deceased_first_name   = $_POST['deceased_first_name'];
+$deceased_middle_name   = $_POST['deceased_middle_name'];
+$deceased_last_name   = $_POST['deceased_last_name'];
 $date_of_death   = $_POST['date_of_death'];
 $place_of_death  = $_POST['place_of_death'];
 $Book_Date       = $_POST['Book_Date'];
@@ -62,10 +64,10 @@ $valid_id             = uploadFile("valid_id");
 // Insert into burial_requirements table
 if ($conn) {
     $sql = "INSERT INTO burial_requirements (
-        user_id, deceased_name, date_of_death, place_of_death,
+        user_id, deceased_first_name, deceased_middle_name, deceased_last_name, date_of_death, place_of_death,
         funeral_home,
         death_certificate, barangay_clearance, valid_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
@@ -74,8 +76,8 @@ if ($conn) {
     }
 
     $stmt->bind_param(
-        "isssssss",
-        $user_id, $deceased_name, $date_of_death, $place_of_death,
+        "isssssssss",
+        $user_id, $deceased_first_name, $deceased_middle_name ,$deceased_last_name , $date_of_death, $place_of_death,
         $funeral_home,
         $death_certificate, $barangay_clearance, $valid_id
     );

@@ -35,7 +35,7 @@ $user_id = $userRow['user_id'];
 
 // Wedding Applications (pending only)
 $stmt1 = $conn->prepare("
-    SELECT wa.wedding_applications_id, wa.husband_first_name, wa.husband_last_name, wa.wife_first_name, wa.wife_last_name 
+    SELECT wa.wedding_applications_id, wa.husband_first_name, wa.husband_last_name, wa.wife_first_name, wa.wife_last_name, e.Book_Date, e.Start_time, e.Status
     FROM wedding_applications wa
     JOIN event e ON e.wedding_application_id = wa.wedding_applications_id
     WHERE e.user_id = ? AND e.status = 'Pending' AND e.booking_type = 'Wedding'
@@ -52,10 +52,10 @@ if ($stmt1) {
 
 // Burial Requests (pending only)
 $stmt2 = $conn->prepare("
-    SELECT br.burial_requirements_id, br.deceased_name , br.date_of_death, br.funeral_home, br.place_of_death, e.Book_Date, e.Start_time
+    SELECT br.burial_requirements_id, br.deceased_name , br.date_of_death, br.funeral_home, br.place_of_death, e.Book_Date, e.Start_time, e.Status
     FROM burial_requirements br
     JOIN event e ON e.burial_requirement_id = br.burial_requirements_id
-    WHERE e.user_id = ? AND e.status = 'Pending' AND e.booking_type = 'Burial'
+    WHERE e.user_id = ? AND e.status = 'Pending' AND e.booking_type = 'burial'
 ");
 if ($stmt2) {
     $stmt2->bind_param("i", $user_id);
@@ -69,10 +69,10 @@ if ($stmt2) {
 
 // Baptismal Bookings (pending only)
 $stmt3 = $conn->prepare("
-    SELECT bb.baptismal_bookings_id, bb.child_first_name, bb.child_last_name, bb.father_first_name, bb.father_last_name, bb.mother_first_name, bb.mother_last_name 
+    SELECT bb.baptismal_bookings_id, bb.child_first_name, bb.child_middle_name, bb.child_last_name, bb.father_first_name, bb.father_middle_name, bb.father_last_name, bb.mother_first_name, bb.mother_middle_name, bb.mother_last_name, e.Book_Date, e.Start_time, e.Status
     FROM baptismal_bookings bb
     JOIN event e ON e.baptismal_booking_id = bb.baptismal_bookings_id
-    WHERE e.user_id = ? AND e.status = 'Pending' AND e.booking_type = 'Baptismal'
+    WHERE e.user_id = ? AND e.status = 'Pending' AND e.booking_type = 'baptismal'
 ");
 if ($stmt3) {
     $stmt3->bind_param("i", $user_id);
@@ -166,9 +166,10 @@ $conn->close();
   <?php if (!empty($weddingResults)): ?>
     <?php foreach ($weddingResults as $row): ?>
       <div class="request-card">
-        <h4><?= htmlspecialchars($row['husband_first_name'] . ' ' . $row['husband_last_name']) ?> & <?= htmlspecialchars($row['wife_first_name'] . ' ' . $row['wife_last_name']) ?></h4>
-        <a href="wedding.details.user.php?id=<?= urlencode($row['wedding_applications_id']) ?>" class="view-more-btn">View More</a>
-        <a href="wedding.edit.php?id=<?= urlencode($row['wedding_applications_id']) ?>" class="edit-btn">Edit</a>
+        <h4>Betrothed: <?= htmlspecialchars($row['husband_first_name'] . ' ' . $row['husband_last_name']) ?> & <?= htmlspecialchars($row['wife_first_name'] . ' ' . $row['wife_last_name']) ?></h4> <br>
+        <p>Book Date: <?= htmlspecialchars($row['Book_Date']) ?></p>
+        <p>Start time: <?= htmlspecialchars($row['Start_time']) ?></p> <br>
+        <a href="wedding.details.php?id=<?= urlencode($row['wedding_applications_id']) ?>" class="view-more-btn">View More</a>
       </div>
     <?php endforeach; ?>
   <?php else: ?>
@@ -185,9 +186,8 @@ $conn->close();
         <p>Funeral Home: <?= htmlspecialchars($row['funeral_home']) ?></p>
         <p>Place of Death <?= htmlspecialchars($row['place_of_death']) ?></p>
         <p>Book Date: <?= htmlspecialchars($row['Book_Date']) ?></p>
-        <p>Start time: <?= htmlspecialchars($row['Start_time']) ?></p>
-        <a href="user.pending.details.burial.php?id=<?= urlencode($row['burial_requirements_id']) ?>" class="view-more-btn">View More</a>
-        <a href="burial.edit.php?id=<?= urlencode($row['burial_requirements_id']) ?>" class="edit-btn">Edit</a>
+        <p>Start time: <?= htmlspecialchars($row['Start_time']) ?></p> <br>
+        <a href="burial.details.php?id=<?= urlencode($row['burial_requirements_id']) ?>" class="view-more-btn">View More</a>
       </div>
     <?php endforeach; ?>
   <?php else: ?>
@@ -199,9 +199,12 @@ $conn->close();
   <?php if (!empty($baptismalResults)): ?>
     <?php foreach ($baptismalResults as $row): ?>
       <div class="request-card">
-        <h4><?= htmlspecialchars($row['child_first_name'] . ' ' . $row['child_last_name']) ?></h4>
+        <h4>Son/Daugther: <?= htmlspecialchars($row['child_first_name'] . ' ' . $row['child_middle_name']. ' '. $row['child_last_name']) ?></h4>
+        <p>Father: <?= htmlspecialchars($row['father_first_name'] . ' ' . $row['father_last_name']. ' ' . $row['father_last_name']) ?></p>
+        <p>Mother: <?= htmlspecialchars($row['mother_first_name'] . ' ' . $row['mother_last_name']. ' ' . $row['mother_last_name']) ?></p>
+        <p>Book Date: <?= htmlspecialchars($row['Book_Date']) ?></p>
+        <p>Start time: <?= htmlspecialchars($row['Start_time']) ?></p> <br>
         <a href="baptismal.details.php?id=<?= urlencode($row['baptismal_bookings_id']) ?>" class="view-more-btn">View More</a>
-        <a href="baptismal.edit.php?id=<?= urlencode($row['baptismal_bookings_id']) ?>" class="edit-btn">Edit</a>
       </div>
     <?php endforeach; ?>
   <?php else: ?>

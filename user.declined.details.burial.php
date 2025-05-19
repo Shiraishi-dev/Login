@@ -101,6 +101,13 @@ while ($row = $slotResult->fetch_assoc()) {
     $bookedSlots[$date][] = $time;
 }
 
+$disabledDates = [];
+foreach ($bookedSlots as $date => $times) {
+    if (in_array("09:00:00", $times) && in_array("13:00:00", $times)) {
+        $disabledDates[] = $date;
+    }
+}
+
 function renderFileField($label, $path) {
     if (!$path) return;
 
@@ -271,7 +278,7 @@ function renderFileField($label, $path) {
       <input type="text" id="place_of_death" name="place_of_death" value="<?= htmlspecialchars($data['place_of_death']) ?>" required>
 
       <label for="burial_date">Date of Burial:</label>
-      <input type="text" id="burial_date" name="Book_Date" value="<?= htmlspecialchars($data['Book_Date']) ?>" readonly required>
+      <input type="text" id="burial_date" name="Book_Date" value="<?= htmlspecialchars($data['Book_Date']) ?>" required>
 
       <label for="Start_time">Start Time:</label>
       <select id="Start_time" name="Start_time" required>
