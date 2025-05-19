@@ -107,28 +107,28 @@ if ($result && mysqli_num_rows($result) > 0) {
         </form>
     </div>
 
-    <script>
+   <script>
     const approvedTimes = <?php echo json_encode($approvedTimes); ?>;
 
     flatpickr("#date_of_baptism", {
         dateFormat: "Y-m-d",
         disable: [
             function(date) {
-                const d = flatpickr.formatDate(date, "Y-m-d");
-                return (
-                    date.getDay() === 0 || date.getDay() === 6 ||
-                    (approvedTimes[d] && approvedTimes[d].includes("09:00:00") && approvedTimes[d].includes("13:00:00"))
-                );
+                // Disable Monday to Saturday (only allow Sunday)
+                return date.getDay() !== 0;
             }
         ],
         minDate: "today",
         onChange: function(selectedDates, dateStr) {
             const timeSelect = document.getElementById("time_of_baptism");
+
+            // Reset all options
             timeSelect.querySelectorAll("option").forEach(opt => {
                 opt.disabled = false;
                 opt.style.color = '';
             });
 
+            // Disable already approved times for selected date
             if (approvedTimes[dateStr]) {
                 approvedTimes[dateStr].forEach(time => {
                     const normalized = time === "09:00:00" ? "09:00" : "13:00";
@@ -142,11 +142,12 @@ if ($result && mysqli_num_rows($result) > 0) {
         }
     });
 
-        flatpickr("#child_birth_date", {
-            dateFormat: "Y-m-d",
+    flatpickr("#child_birth_date", {
+        dateFormat: "Y-m-d",
         maxDate: "today"
     });
-    </script>
+</script>
+
 
 </body>
 </html>

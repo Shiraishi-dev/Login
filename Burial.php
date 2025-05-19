@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             function(date) {
                 const d = flatpickr.formatDate(date, "Y-m-d");
                 // Disable weekends
-                if (date.getDay() === 0 || date.getDay() === 6) return true;
+                if (date.getDay() === 0) return true;
 
                 // Disable dates where both time slots are fully booked
                 if (approvedTimes[d]) {
