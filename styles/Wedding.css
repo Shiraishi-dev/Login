@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
+
+* {
+  font-family: "Oswald", sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #f2e7aa;
+}
+
+
+.go-back {
+  display: block;
+  margin: 20px;
+  font-weight: bold;
+  text-decoration: none;
+  color: black;
+  font-family: 'Arial Black', sans-serif;
+}
+
+.title {
+  text-align: center;
+  font-size: 2em;
+  margin-top: 0;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  padding: 200px;
+  flex-wrap: wrap;
+}
+
+.attachment-section,
+.form-section {
+  background-color: #6d4b4b;
+  padding: 30px;
+  border-radius: 10px;
+  color: white;
+  width: 450px;
+}
+
+/* Headings */
+h2 {
+  text-align: center;
+  font-family: 'Arial Black', sans-serif;
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+h3 {
+  margin-top: 20px;
+  font-size: 1.1em;
+  font-family: 'Arial Black', sans-serif;
+}
+
+/* File‐upload grid */
+.attachments {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.attachments label {
+  display: block;
+  font-size: 0.9em;
+}
+input[type="file"] {
+  margin-top: 5px;
+}
+
+/* Form layout */
+.form-section form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.row input {
+  flex: 1;                /* each input shares the row equally */
+  padding: 10px;
+  border: none;
+  border-radius: 10px;    /* added px unit */
+  background: #ddd;
+}
+
+/* Text inputs */
+input[type="text"],
+input[type="date"] {
+  font-size: 0.9em;
+}
+
+/* Age input – allow reasonable width */
+.age-input {
+  width: 100px;           /* instead of 15px */
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #ddd;
+}
+
+/* Submit button */
+.submit-btn {
+  padding: 10px;
+  border: none;
+  border-radius: 15px;
+  background: #ddd;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.submit-btn:hover {
+  background-color: #5a3b3b; /* Brown hover effect */
+  color: white;
+}
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 100px;
+}
+
+.form-section, .attachment-section {
+  margin-bottom: 30px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.form-row input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.attachments label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.submit-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+}
+
+h2, h3 {
+  margin-bottom: 10px;
+}
+
+.go-back {
+  display: inline-block;
+  margin: 15px;
+  text-decoration: none;
+}

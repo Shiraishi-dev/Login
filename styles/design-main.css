@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
+
+* {
+    font-family: "Oswald", sans-serif;
+}
+.logo {
+    width: 75px;
+    border-radius: 100px;
+    margin-left: 50px;
+}
+
+.menu {
+    text-decoration: none;
+    color: black;
+}
+
+body {
+    background: #dad9d9;
+}
+
+.welcome-message {
+    margin-left: -50px;
+}
+
+.left-col {
+    margin-left: 200px;
+    margin-top: 150px;    
+}
+
+.main-text {
+    font-size: 100px;
+    margin-top: -90px;
+    margin-bottom: 0;
+    font-weight: bold;
+}
+
+.second-text {
+    font-size: 50px;
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+.option-1 {
+    font-size: 40px;
+    margin-top: -40px;
+    margin-bottom: 0;
+}
+
+.option-2 {
+    font-size: 40px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.option-3 {
+    font-size: 40px;
+    margin-top: -10px;
+    margin-bottom: 20px;
+}
+
+.option-4 {
+    font-size: 40px;
+    margin-top: -20px;
+    margin-bottom: 20px;
+}
+
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e7e2b1;
+    border-radius: 20px;
+}
+
+.top {
+    max-width: 1900px;
+    margin: 0 auto;
+}
+
+nav {
+    margin: 2em;
+}
+
+nav ul {
+    list-style-type: none;
+    display: flex;
+    gap: 5.1em;
+}
+
+.Home:hover {
+    text-decoration: underline;
+}
+.Book-Events:hover {
+    text-decoration: underline;
+}
+.About-Us:hover {
+    text-decoration: underline;
+}
+.nav-log {
+    background-color: #a06262;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    padding: 10px 20px;
+    font-size: 20px;
+}
+
+.main-text {
+    font-size: 50px;
+    margin-bottom: 50px;
+}
+
+.nav-sign {
+    background-color: #a06262;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    width: 150px;
+    font-size: 20px;
+}
+
+.nav-book {
+    background-color: #a06262;
+    border: none;
+    font-size: 30px;
+    border-radius: 10px;
+    color: white;
+    width: 200px;
+    height: 50px;
+}
+
+nav a {
+    text-decoration: none;
+    color: black;
+    font-size: 2.2rem;
+}
+
+.nav-book {
+    text-decoration: none;
+}
+
+
+.nav-book:hover {
+    text-decoration: underline;
+    opacity: 4px;
+}
+
+
+.nav-log:hover {
+    text-decoration: underline;
+}

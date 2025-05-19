@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
+
+* {
+    font-family: "Oswald", sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  background-color: #e9e3a1;
+  text-align: center;
+ 
+}
+
+.header {
+  padding-top: 30px;
+}
+
+.logo {
+  width: 80px;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.event-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  background-color: #654b4b;
+  padding: 50px 0;
+  border-radius: 20px;
+  margin: 0 auto;
+  max-width: 2000px;
+  
+}
+
+.event {
+  background-color: #654b4b;
+  color: white;
+  width: 600px;
+}
+
+.event a {
+  display: block; /* Make the entire container clickable */
+  text-decoration: none; /* Remove default link underline */
+}
+
+.event img {
+  width: 100%;
+  border-radius: 20px;
+  transition: transform 0.3s ease-in-out; /* Smooth hover effect */
+}
+
+.event img:hover {
+  transform: scale(1.1);
+}
+
+.event-title {
+  margin: 10px 0;
+  font-weight: bold;
+  font-size: 1.2em;
+  color: white;
+  transition: color 0.3s ease-in-out;
+}
+
+.event a:focus .event-title,
+.event a:active .event-title {
+  color: yellow;
+}
+
+.book-btn {
+  margin-top: 10px;
+  background-color: #dedc75;
+  color: black;
+  padding: 10px 30px;
+  font-weight: bold;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  width: 630px;
+}
+
+.book-btn:hover {
+  background-color: #c5c356;
+}

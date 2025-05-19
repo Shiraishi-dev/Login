@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Oswald", sans-serif;
+}
+
+body {
+    background-color: #e5dede;
+    min-height: 100vh;
+}
+
+.title-a {
+    margin-left: 23px;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 260px;
+    display: flex;
+    background: #a06262;
+    flex-direction: column;
+    padding: 25px 20px;
+    transition: all 0.4s ease;
+}
+
+.side-header {
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.side-header img {
+    width: 42px;
+    border-radius: 50%;
+}
+
+.sidebar-links {
+    list-style: none;
+    margin-top: 20px;
+    height: 80%;
+    overflow-y: auto;
+    scrollbar-width: none;
+    color: white;
+}
+
+.sidebar-links h4 {
+    font-weight: 500;
+    margin: 10px 0;
+    white-space: nowrap;
+}
+
+.sidebar-links li a {
+    color: #dbd4d4e3;
+    font-weight: 500;
+    align-items: center;
+    gap: 0 20px;
+    display: flex;
+    padding: 15px 10px;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.sidebar-links li a:hover {
+    background: #ffffff2d;
+    color: #fff;
+    border-radius: 4px;
+}
+
+.user-account {
+    margin-top: auto;
+    padding: 12px 10px;
+    margin-left: -10px;
+}
+
+.user-account .user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.user-profile img {
+    width: 42px;
+    border-radius: 50%;
+}
+
+.user-detail {
+    margin-left: 23px;
+    color: white;
+}
+
+.top1 {
+    display: grid;
+    background-color: #e7e2b1;
+    grid-template-columns: 1fr;
+    grid-template-rows: 100px 1fr 100px;
+    height: 70px;
+}
+  
+.calendar-container {
+    margin-left: 260px;
+    padding: 20px;
+    flex-grow: 1;
+    margin-left: 250px;
+
+}
+
+.calendar-container h2 {
+    color: #333;
+}
+  
+  h2 {
+    margin-bottom: 10px;
+    color: white;
+  }
+  
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    
+  }
+  
+  .calendar-header button {
+    background: #a06262;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .day-name {
+    text-align: center;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .day {
+    width: 100%;
+    height: 80px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .day:hover {
+    background: #ddd;
+  }
+  
+  .day.today {
+    background: #ffd6d6;
+  }
+  
+  .day .event-dot {
+    width: 8px;
+    height: 8px;
+    background: red;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 8px;
+  }
+  
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+  }
+  
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+  }
+  
+  .close-button {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: black;
+  }
+  
+  ul#eventList {
+    margin-top: 15px;
+    list-style: none;
+    padding: 0;
+    color: #333;
+  }
+  
